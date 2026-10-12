@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренажер ментального счета</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --gray: #64748b;
+            --success: #22c55e;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 480px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 22px;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Настройки */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--gray);
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #fff;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            cursor: pointer;
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .checkbox-label input {
+            width: auto;
+        }
+
+        /* Кнопки */
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 10px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Игровой экран */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .timer-fill {
+            width: 100%;
+            height: 100%;
+            background: var(--primary);
+            transition: width 1s linear;
+        }
+
+        .problem-box {
+            font-size: 36px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        /* Экран результатов */
+        .stats-summary {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .stat-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-value {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ЭКРАН МЕНЮ -->
+    <div id="menu-screen" class="screen active">
+        <h1>🧠 Тренажер счета</h1>
+        
+        <div class="form-group">
+            <label>Выберите операции:</label>
+            <div class="checkbox-group">
+                <label class="checkbox-label"><input type="checkbox" name="op" value="+" checked> Сложение (+)</label>
+                <label class="checkbox-label"><input type="checkbox" name="op" value="-" checked> Вычитание (-)</label>
+                <label class="checkbox-label"><input type="checkbox" name="op" value="*"> Умножение (×)</label>
+                <label class="checkbox-label"><input type="checkbox" name="op" value="/"> Деление (÷)</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="digits1">Разрядность 1-го числа:</label>
+            <select id="digits1">
+                <option value="1">Однозначное (1–9)</option>
+                <option value="2" selected>Двухзначное (10–99)</option>
+                <option value="3">Трехзначное (100–999)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="digits2">Разрядность 2-го числа:</label>
+            <select id="digits2">
+                <option value="1" selected>Однозначное (1–9)</option>
+                <option value="2">Двухзначное (10–99)</option>
+                <option value="3">Трехзначное (100–999)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="timer-sec">Время на вопрос (сек):</label>
+            <select id="timer-sec">
+                <option value="5">5 секунд (Хардкор)</option>
+                <option value="10" selected>10 секунд</option>
+                <option value="15">15 секунд</option>
+                <option value="30">30 секунд</option>
+                <option value="0">Без таймера</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="count-q">Количество вопросов:</label>
+            <select id="count-q">
+                <option value="5">5 вопросов</option>
+                <option value="10" selected>10 вопросов</option>
+                <option value="20">20 вопросов</option>
+                <option value="30">30 вопросов</option>
+            </select>
+        </div>
+
+        <button onclick="startTraining()">Начать тренировку</button>
+    </div>
+
+    <!-- ЭКРАН ИГРЫ -->
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <span id="progress-text">Вопрос 1 из 10</span>
+            <span id="score-text">Верно: 0</span>
+        </div>
+        <div class="timer-bar" id="timer-container">
+            <div class="timer-fill" id="timer-fill"></div>
+        </div>
+        
+        <div class="problem-box" id="problem-display">12 + 5 = ?</div>
+
+        <div class="form-group">
+            <input type="number" id="user-answer" placeholder="Введите ответ..." autocomplete="off">
+        </div>
+        <button onclick="checkAnswer()">Ответить</button>
+    </div>
+
+    <!-- ЭКРАН РЕЗУЛЬТАТОВ -->
+    <div id="result-screen" class="screen">
+        <h1>📊 Результаты тренировки</h1>
+        
+        <div class="stats-summary">
+            <div class="stat-row">
+                <span>Всего вопросов:</span>
+                <span id="res-total" class="stat-value">10</span>
+            </div>
+            <div class="stat-row">
+                <span>Правильных ответов:</span>
+                <span id="res-correct" class="stat-value" style="color: var(--success);">8</span>
+            </div>
+            <div class="stat-row">
+                <span>Ошибок:</span>
+                <span id="res-wrong" class="stat-value" style="color: var(--error);">2</span>
+            </div>
+            <div class="stat-row">
+                <span>Точность:</span>
+                <span id="res-accuracy" class="stat-value">80%</span>
+            </div>
+            <div class="stat-row">
+                <span>Среднее время на ответ:</span>
+                <span id="res-time" class="stat-value">3.2 сек</span>
+            </div>
+        </div>
+
+        <button onclick="showMenu()">В меню</button>
+    </div>
+</div>
+
+<script>
+    let settings = {
+        ops: ['+', '-'],
+        digits1: 2,
+        digits2: 1,
+        timerSec: 10,
+        totalQuestions: 10
+    };
+
+    let state = {
+        currentQuestion: 0,
+        correctCount: 0,
+        wrongCount: 0,
+        currentAnswer: 0,
+        startTime: 0,
+        totalTimeSpent: 0,
+        timer: null,
+        timeLeft: 0
+    };
+
+    function getRandomNumber(digits) {
+        if (digits === 1) return Math.floor(Math.random() * 9) + 1; // 1-9
+        if (digits === 2) return Math.floor(Math.random() * 90) + 10; // 10-99
+        if (digits === 3) return Math.floor(Math.random() * 900) + 100; // 100-999
+        return 1;
+    }
+
+    function startTraining() {
+        // Считываем настройки
+        const opCheckboxes = document.querySelectorAll('input[name="op"]:checked');
+        settings.ops = Array.from(opCheckboxes).map(cb => cb.value);
+        
+        if (settings.ops.length === 0) {
+            alert('Выберите хотя бы одну математическую операцию!');
+            return;
+        }
+
+        settings.digits1 = parseInt(document.getElementById('digits1').value);
+        settings.digits2 = parseInt(document.getElementById('digits2').value);
+        settings.timerSec = parseInt(document.getElementById('timer-sec').value);
+        settings.totalQuestions = parseInt(document.getElementById('count-q').value);
+
+        // Сбрасываем стейт
+        state.currentQuestion = 0;
+        state.correctCount = 0;
+        state.wrongCount = 0;
+        state.totalTimeSpent = 0;
+
+        document.getElementById('menu-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        if (state.currentQuestion >= settings.totalQuestions) {
+            endTraining();
+            return;
+        }
+
+        state.currentQuestion++;
+        document.getElementById('progress-text').innerText = `Вопрос ${state.currentQuestion} из ${settings.totalQuestions}`;
+        document.getElementById('score-text').innerText = `Верно: ${state.correctCount}`;
+        
+        let a = getRandomNumber(settings.digits1);
+        let b = getRandomNumber(settings.digits2);
+        const op = settings.ops[Math.floor(Math.random() * settings.ops.length)];
+
+        // Для вычитания делаем так, чтобы не было отрицательных чисел
+        if (op === '-' && a < b) {
+            let temp = a; a = b; b = temp;
+        }
+
+        // Для деления делаем чистый целочисленный результат
+        if (op === '/') {
+            // Пусть b будет простым числом, а a = b * c
+            b = getRandomNumber(settings.digits2);
+            let c = getRandomNumber(settings.digits1);
+            a = b * c;
+        }
+
+        if (op === '+') state.currentAnswer = a + b;
+        if (op === '-') state.currentAnswer = a - b;
+        if (op === '*') state.currentAnswer = a * b;
+        if (op === '/') state.currentAnswer = a / b;
+
+        let opSign = op;
+        if (op === '*') opSign = '×';
+        if (op === '/') opSign = '÷';
+
+        document.getElementById('problem-display').innerText = `${a} ${opSign} ${b} = ?`;
+        
+        const inputField = document.getElementById('user-answer');
+        inputField.value = '';
+        inputField.focus();
+
+        state.startTime = Date.now();
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(state.timer);
+        const timerContainer = document.getElementById('timer-container');
+        const timerFill = document.getElementById('timer-fill');
+
+        if (settings.timerSec === 0) {
+            timerContainer.style.display = 'none';
+            return;
+        }
+
+        timerContainer.style.display = 'block';
+        state.timeLeft = settings.timerSec;
+        timerFill.style.width = '100%';
+
+        let step = 100 / settings.timerSec;
+
+        state.timer = setInterval(() => {
+            state.timeLeft--;
+            let currentWidth = step * state.timeLeft;
+            timerFill.style.width = `${currentWidth}%`;
+
+            if (state.timeLeft <= 0) {
+                clearInterval(state.timer);
+                state.wrongCount++;
+                nextQuestion();
+            }
+        }, 1000);
+    }
+
+    function checkAnswer() {
+        clearInterval(state.timer);
+        const inputField = document.getElementById('user-answer');
+        const userVal = parseFloat(inputField.value);
+
+        let timeSpent = (Date.now() - state.startTime) / 1000;
+        state.totalTimeSpent += timeSpent;
+
+        if (!isNaN(userVal) && userVal === state.currentAnswer) {
+            state.correctCount++;
+        } else {
+            state.wrongCount++;
+        }
+
+        nextQuestion();
+    }
+
+    // Поддержка нажатия Enter на клавиатуре
+    document.getElementById('user-answer').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            checkAnswer();
+        }
+    });
+	
+    function endTraining() {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+
+        document.getElementById('res-total').innerText = settings.totalQuestions;
+        document.getElementById('res-correct').innerText = state.correctCount;
+        document.getElementById('res-wrong').innerText = state.wrongCount;
+        
+        let accuracy = Math.round((state.correctCount / settings.totalQuestions) * 100);
+        document.getElementById('res-accuracy').innerText = `${accuracy}%`;
+
+        let avgTime = (state.totalTimeSpent / settings.totalQuestions).toFixed(1);
+        document.getElementById('res-time').innerText = `${avgTime} сек`;
+    }
+
+    function showMenu() {
+        document.getElementById('result-screen').classList.remove('active');
+        document.getElementById('menu-screen').classList.add('active');
+    }
+</script>
+
+</body>
+</html>
